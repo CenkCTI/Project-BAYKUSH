@@ -1,0 +1,186 @@
+/*
+ * Animated world layer for the BAYKUSH hero.
+ * The approved owl stays fixed behind the globe while the continent strip
+ * travels inside the circular clip path, creating a continuous eastward spin.
+ */
+.globe-shell {
+  z-index: 4;
+  isolation: isolate;
+  pointer-events: none;
+  will-change: transform;
+  animation: globe-float 7s ease-in-out infinite;
+}
+
+.globe-shell::before {
+  content: "";
+  position: absolute;
+  inset: 12.5%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 29%,
+    rgba(255, 219, 153, 0.22),
+    rgba(213, 142, 34, 0.08) 39%,
+    rgba(213, 142, 34, 0) 72%
+  );
+  filter: blur(15px);
+  animation: globe-aura-pulse 5.5s ease-in-out infinite;
+}
+
+.globe-shell::after {
+  content: "";
+  position: absolute;
+  inset: 15.25%;
+  z-index: 6;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 229, 178, 0.11), transparent 29%),
+    linear-gradient(93deg, transparent 35%, rgba(0, 0, 0, 0.12) 57%, rgba(0, 0, 0, 0.73) 100%);
+  box-shadow:
+    inset 18px 9px 28px rgba(255, 203, 112, 0.04),
+    inset -42px -8px 55px rgba(0, 0, 0, 0.62);
+}
+
+.globe {
+  display: block;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.globe-body {
+  animation: globe-body-glow 5.5s ease-in-out infinite;
+}
+
+.globe-grid {
+  transform-box: view-box;
+  transform-origin: 210px 210px;
+  animation: globe-grid-drift 9s ease-in-out infinite alternate;
+}
+
+.map-track {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  will-change: transform;
+  animation: globe-map-spin 22s linear infinite;
+}
+
+.land {
+  vector-effect: non-scaling-stroke;
+  animation: land-signal 4.8s ease-in-out infinite;
+}
+
+.globe-shine {
+  stroke-dasharray: 48 190;
+  stroke-dashoffset: 0;
+  animation: globe-shimmer 6.5s ease-in-out infinite;
+}
+
+.globe-rim {
+  filter: drop-shadow(0 0 4px rgba(239, 190, 104, 0.28));
+}
+
+@keyframes globe-map-spin {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-360px, 0, 0);
+  }
+}
+
+@keyframes globe-float {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+@keyframes globe-grid-drift {
+  from {
+    transform: translateX(-1.5px) scaleX(0.992);
+    opacity: 0.76;
+  }
+
+  to {
+    transform: translateX(1.5px) scaleX(1.008);
+    opacity: 1;
+  }
+}
+
+@keyframes globe-body-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(214, 143, 34, 0.12));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 19px rgba(214, 143, 34, 0.26));
+  }
+}
+
+@keyframes globe-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes land-signal {
+  0%,
+  100% {
+    fill-opacity: 0.72;
+    stroke-opacity: 0.68;
+  }
+
+  50% {
+    fill-opacity: 1;
+    stroke-opacity: 1;
+  }
+}
+
+@keyframes globe-shimmer {
+  0%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.48;
+  }
+
+  50% {
+    stroke-dashoffset: -98;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .globe-shell {
+    animation-duration: 8s;
+  }
+
+  .map-track {
+    animation-duration: 26s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globe-shell,
+  .globe-shell::before,
+  .globe-body,
+  .globe-grid,
+  .map-track,
+  .land,
+  .globe-shine {
+    animation: none !important;
+  }
+}
