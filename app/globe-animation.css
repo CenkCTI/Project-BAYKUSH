@@ -1,7 +1,8 @@
 /*
- * Animated world layer for the BAYKUSH hero.
- * The approved owl stays fixed behind the globe while the continent strip
- * travels inside the circular clip path, creating a continuous eastward spin.
+ * Animated Earth layer for the BAYKUSH hero.
+ * The approved owl remains fixed behind the planet. The ocean and continents
+ * stay clearly visible while the duplicated continent strip moves through the
+ * circular clip path to create a continuous world rotation.
  */
 .globe-shell {
   z-index: 4;
@@ -14,16 +15,17 @@
 .globe-shell::before {
   content: "";
   position: absolute;
-  inset: 12.5%;
+  inset: 10.5%;
   z-index: -1;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 42% 29%,
-    rgba(255, 219, 153, 0.22),
-    rgba(213, 142, 34, 0.08) 39%,
-    rgba(213, 142, 34, 0) 72%
+    circle,
+    rgba(80, 190, 225, 0.34) 0%,
+    rgba(30, 126, 170, 0.18) 43%,
+    rgba(213, 142, 34, 0.08) 67%,
+    transparent 76%
   );
-  filter: blur(15px);
+  filter: blur(14px);
   animation: globe-aura-pulse 5.5s ease-in-out infinite;
 }
 
@@ -35,27 +37,49 @@
   border-radius: 50%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 34% 22%, rgba(255, 229, 178, 0.11), transparent 29%),
-    linear-gradient(93deg, transparent 35%, rgba(0, 0, 0, 0.12) 57%, rgba(0, 0, 0, 0.73) 100%);
+    radial-gradient(circle at 31% 22%, rgba(255, 255, 255, 0.24), transparent 24%),
+    radial-gradient(circle at 39% 35%, rgba(118, 215, 244, 0.11), transparent 42%),
+    linear-gradient(93deg, transparent 48%, rgba(3, 17, 25, 0.08) 63%, rgba(1, 8, 13, 0.52) 100%);
   box-shadow:
-    inset 18px 9px 28px rgba(255, 203, 112, 0.04),
-    inset -42px -8px 55px rgba(0, 0, 0, 0.62);
+    inset 16px 8px 24px rgba(152, 224, 246, 0.12),
+    inset -34px -7px 48px rgba(0, 0, 0, 0.44),
+    inset 0 0 0 1px rgba(180, 230, 244, 0.11);
 }
 
 .globe {
   display: block;
   overflow: visible;
   shape-rendering: geometricPrecision;
+  filter:
+    drop-shadow(0 0 14px rgba(50, 163, 205, 0.25))
+    drop-shadow(0 0 24px rgba(213, 142, 34, 0.1));
 }
 
+/* Override the former near-black sphere: this is now a visible blue Earth. */
 .globe-body {
+  fill: #0b4d70 !important;
+  stroke: rgba(124, 210, 239, 0.76) !important;
+  stroke-width: 1.5 !important;
   animation: globe-body-glow 5.5s ease-in-out infinite;
+}
+
+.globe-aura {
+  fill: rgba(35, 137, 178, 0.08) !important;
+  stroke: rgba(112, 205, 236, 0.26) !important;
+  stroke-width: 1.1;
 }
 
 .globe-grid {
   transform-box: view-box;
   transform-origin: 210px 210px;
   animation: globe-grid-drift 9s ease-in-out infinite alternate;
+}
+
+.globe-grid ellipse,
+.globe-grid path {
+  fill: none !important;
+  stroke: rgba(165, 222, 238, 0.22) !important;
+  stroke-width: 0.75 !important;
 }
 
 .map-track {
@@ -65,19 +89,44 @@
   animation: globe-map-spin 22s linear infinite;
 }
 
+/* Visible continents: green/ochre land instead of faint amber outlines. */
 .land {
+  fill: #78984d !important;
+  fill-opacity: 0.98 !important;
+  stroke: rgba(228, 213, 146, 0.9) !important;
+  stroke-width: 1.05 !important;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  animation: land-signal 4.8s ease-in-out infinite;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.32));
+  animation: land-signal 5.4s ease-in-out infinite;
+}
+
+.map-track g path:nth-child(2) {
+  fill: #879d55 !important;
+}
+
+.map-track g path:nth-child(3),
+.map-track g path:nth-child(4) {
+  fill: #9f9d5b !important;
 }
 
 .globe-shine {
+  fill: none !important;
+  stroke: rgba(225, 247, 255, 0.78) !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round;
   stroke-dasharray: 48 190;
   stroke-dashoffset: 0;
   animation: globe-shimmer 6.5s ease-in-out infinite;
 }
 
 .globe-rim {
-  filter: drop-shadow(0 0 4px rgba(239, 190, 104, 0.28));
+  fill: none !important;
+  stroke: rgba(137, 219, 242, 0.8) !important;
+  stroke-width: 1.5 !important;
+  filter:
+    drop-shadow(0 0 4px rgba(102, 201, 232, 0.42))
+    drop-shadow(0 0 9px rgba(213, 142, 34, 0.14));
 }
 
 @keyframes globe-map-spin {
@@ -104,7 +153,7 @@
 @keyframes globe-grid-drift {
   from {
     transform: translateX(-1.5px) scaleX(0.992);
-    opacity: 0.76;
+    opacity: 0.72;
   }
 
   to {
@@ -116,18 +165,18 @@
 @keyframes globe-body-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 10px rgba(214, 143, 34, 0.12));
+    filter: drop-shadow(0 0 10px rgba(60, 173, 213, 0.18));
   }
 
   50% {
-    filter: drop-shadow(0 0 19px rgba(214, 143, 34, 0.26));
+    filter: drop-shadow(0 0 20px rgba(83, 193, 230, 0.34));
   }
 }
 
 @keyframes globe-aura-pulse {
   0%,
   100% {
-    opacity: 0.58;
+    opacity: 0.66;
     transform: scale(0.98);
   }
 
@@ -140,13 +189,15 @@
 @keyframes land-signal {
   0%,
   100% {
-    fill-opacity: 0.72;
-    stroke-opacity: 0.68;
+    filter:
+      brightness(0.94)
+      drop-shadow(0 1px 1px rgba(0, 0, 0, 0.32));
   }
 
   50% {
-    fill-opacity: 1;
-    stroke-opacity: 1;
+    filter:
+      brightness(1.08)
+      drop-shadow(0 1px 2px rgba(0, 0, 0, 0.36));
   }
 }
 
@@ -154,12 +205,12 @@
   0%,
   100% {
     stroke-dashoffset: 0;
-    opacity: 0.48;
+    opacity: 0.42;
   }
 
   50% {
     stroke-dashoffset: -98;
-    opacity: 1;
+    opacity: 0.9;
   }
 }
 
