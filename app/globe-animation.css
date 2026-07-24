@@ -1,9 +1,10 @@
 /*
  * Photorealistic rotating Earth for the BAYKUSH hero.
- * The old flat blue/green vector fills are hidden. A NASA Earth-at-night
- * equirectangular texture moves behind the existing spherical grid and rim,
- * preserving the black/amber reference style while making the planet read as
- * a real satellite-rendered Earth rather than an illustrated globe.
+ *
+ * The previous version applied the texture to the full 342px shell while the
+ * SVG grid/rim occupied only the 292px circle inside its 420px viewBox. That
+ * produced the visible "black ring + small globe" defect. The texture now fills
+ * the actual sphere and the SVG overlay is scaled to the same diameter.
  */
 .globe-shell {
   z-index: 4;
@@ -13,43 +14,49 @@
   border-radius: 50%;
   background: #020303;
   box-shadow:
-    0 0 0 1px rgba(224, 161, 63, 0.35),
-    0 0 18px rgba(224, 151, 47, 0.18),
-    0 0 44px rgba(224, 151, 47, 0.09),
-    inset 0 0 30px rgba(0, 0, 0, 0.86);
+    0 0 0 1px rgba(224, 161, 63, 0.28),
+    0 0 18px rgba(224, 151, 47, 0.15),
+    0 0 42px rgba(224, 151, 47, 0.07),
+    inset 0 0 22px rgba(0, 0, 0, 0.52);
   will-change: transform;
   animation: globe-float 7s ease-in-out infinite;
 }
 
 /*
- * NASA Black Marble / Earth-at-night texture.
- * The map is 2:1, so 200% width maps naturally to the circular viewport.
- * Moving the background by 200 percentage points advances one full world map.
+ * NASA Black Marble / Earth-at-night equirectangular texture.
+ *
+ * The pseudo-element is four globe-widths wide. Each map tile occupies two
+ * globe-widths, preserving the source image's 2:1 aspect ratio. Translating by
+ * half the pseudo-element advances exactly one complete map, creating a smooth
+ * and seamless rotation without stretching the continents.
  */
 .globe-shell::before {
   content: "";
   position: absolute;
-  inset: -1px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 400%;
   z-index: 0;
-  border-radius: 50%;
   background-image: url("https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.3600x1800.jpg");
   background-repeat: repeat-x;
-  background-size: 200% 100%;
-  background-position: 44% 50%;
+  background-size: 50% 100%;
+  background-position: 0 50%;
   filter:
-    grayscale(0.84)
-    sepia(1)
-    saturate(1.55)
-    hue-rotate(-13deg)
-    brightness(0.62)
-    contrast(1.58);
-  transform: scale(1.035);
-  transform-origin: center;
-  will-change: background-position;
-  animation: realistic-earth-spin 34s linear infinite;
+    grayscale(0.76)
+    sepia(0.92)
+    saturate(1.18)
+    hue-rotate(-8deg)
+    brightness(0.78)
+    contrast(1.38);
+  opacity: 0.98;
+  transform: translate3d(-12.5%, 0, 0);
+  transform-origin: left center;
+  will-change: transform;
+  animation: realistic-earth-spin 38s linear infinite;
 }
 
-/* Directional light, night-side falloff, atmosphere and a restrained gold rim. */
+/* Directional illumination, spherical falloff and a restrained gold atmosphere. */
 .globe-shell::after {
   content: "";
   position: absolute;
@@ -58,28 +65,36 @@
   border-radius: 50%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 34% 15%, rgba(255, 225, 169, 0.23), transparent 23%),
-    radial-gradient(circle at 47% 42%, transparent 31%, rgba(0, 0, 0, 0.13) 59%, rgba(0, 0, 0, 0.86) 100%),
-    linear-gradient(93deg, rgba(255, 194, 96, 0.03) 0%, transparent 46%, rgba(0, 0, 0, 0.2) 66%, rgba(0, 0, 0, 0.74) 100%);
+    radial-gradient(circle at 34% 13%, rgba(255, 226, 174, 0.28), transparent 23%),
+    radial-gradient(circle at 43% 42%, transparent 0 48%, rgba(0, 0, 0, 0.11) 70%, rgba(0, 0, 0, 0.67) 100%),
+    linear-gradient(94deg, rgba(255, 191, 84, 0.04) 0%, transparent 51%, rgba(0, 0, 0, 0.13) 68%, rgba(0, 0, 0, 0.54) 100%);
   box-shadow:
-    inset 18px 10px 30px rgba(255, 199, 105, 0.07),
-    inset -50px -10px 70px rgba(0, 0, 0, 0.78),
-    inset 0 0 0 1px rgba(238, 187, 98, 0.42),
-    inset 0 0 12px rgba(238, 187, 98, 0.12);
+    inset 18px 10px 30px rgba(255, 199, 105, 0.08),
+    inset -38px -8px 58px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(238, 187, 98, 0.36),
+    inset 0 0 15px rgba(238, 187, 98, 0.11);
 }
 
-/* Keep the existing SVG only as a precise spherical grid/rim overlay. */
+/*
+ * The original SVG circle has a 292px diameter inside a 420px viewBox.
+ * Scaling by 1.42 aligns the grid and rim with the full globe shell and removes
+ * the incorrect inner-circle appearance shown in Preview.
+ */
 .globe {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 3;
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
+  transform: scale(1.42);
+  transform-origin: 50% 50%;
   shape-rendering: geometricPrecision;
-  filter: drop-shadow(0 0 8px rgba(218, 145, 36, 0.16));
+  filter: drop-shadow(0 0 7px rgba(218, 145, 36, 0.14));
 }
 
+/* The satellite texture supplies the surface; SVG is retained only for HUD lines. */
 .globe-body,
 .globe-aura,
 .map-track,
@@ -97,26 +112,26 @@
 .globe-grid ellipse,
 .globe-grid path {
   fill: none !important;
-  stroke: rgba(220, 159, 60, 0.15) !important;
-  stroke-width: 0.72 !important;
+  stroke: rgba(220, 159, 60, 0.13) !important;
+  stroke-width: 0.68 !important;
 }
 
 .globe-rim {
   fill: none !important;
-  stroke: rgba(239, 190, 104, 0.66) !important;
-  stroke-width: 1.35 !important;
+  stroke: rgba(239, 190, 104, 0.58) !important;
+  stroke-width: 1.12 !important;
   filter:
-    drop-shadow(0 0 3px rgba(239, 190, 104, 0.35))
-    drop-shadow(0 0 9px rgba(213, 142, 34, 0.14));
+    drop-shadow(0 0 3px rgba(239, 190, 104, 0.29))
+    drop-shadow(0 0 8px rgba(213, 142, 34, 0.11));
 }
 
 @keyframes realistic-earth-spin {
   from {
-    background-position: 44% 50%;
+    transform: translate3d(-12.5%, 0, 0);
   }
 
   to {
-    background-position: 244% 50%;
+    transform: translate3d(-62.5%, 0, 0);
   }
 }
 
@@ -133,13 +148,13 @@
 
 @keyframes globe-grid-drift {
   from {
-    transform: translateX(-1px) scaleX(0.995);
-    opacity: 0.7;
+    transform: translateX(-0.7px) scaleX(0.997);
+    opacity: 0.72;
   }
 
   to {
-    transform: translateX(1px) scaleX(1.005);
-    opacity: 1;
+    transform: translateX(0.7px) scaleX(1.003);
+    opacity: 0.94;
   }
 }
 
@@ -149,7 +164,7 @@
   }
 
   .globe-shell::before {
-    animation-duration: 40s;
+    animation-duration: 44s;
   }
 }
 
@@ -158,5 +173,9 @@
   .globe-shell::before,
   .globe-grid {
     animation: none !important;
+  }
+
+  .globe-shell::before {
+    transform: translate3d(-12.5%, 0, 0);
   }
 }
