@@ -1,0 +1,45 @@
+/* True orthographic Earth rendering. The map is projected onto a sphere in canvas; it no longer slides as a flat strip. */
+.globe-shell {
+  overflow: visible !important;
+  border-radius: 50%;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: earth-float 8s ease-in-out infinite !important;
+}
+
+.globe-shell::before,
+.globe-shell::after,
+.globe-shell > .globe {
+  display: none !important;
+}
+
+.real-earth-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 10px rgba(213, 142, 34, 0.18))
+    drop-shadow(0 0 26px rgba(213, 142, 34, 0.08));
+}
+
+@keyframes earth-float {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globe-shell {
+    animation: none !important;
+    transform: translateX(-50%) !important;
+  }
+}
