@@ -3,273 +3,353 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactPortal } from "react";
 import { createPortal } from "react-dom";
-import { earthTextureDataUri } from "./earth-texture";
 
 type GeoPoint = readonly [longitude: number, latitude: number];
-type ProjectedPoint = { x: number; y: number; visible: boolean; depth: number };
-
-type ProjectionLookup = {
-  size: number;
-  pixelIndexes: Uint32Array;
-  longitudeOffsets: Float32Array;
-  textureRows: Uint16Array;
-  diffuse: Float32Array;
-  edge: Float32Array;
-  imageData: ImageData;
+type LandShape = readonly GeoPoint[];
+type CameraPoint = { x: number; y: number; z: number };
+type GeoJsonGeometry = {
+  type: "Polygon" | "MultiPolygon";
+  coordinates: number[][][] | number[][][][];
 };
-
-type TextureSource = {
-  pixels: Uint8ClampedArray;
-  width: number;
-  height: number;
+type GeoJsonCollection = {
+  features?: Array<{ geometry?: GeoJsonGeometry | null }>;
 };
 
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
-const TILT = -8 * DEG;
-const INTERNAL_MAX_SIZE = 480;
-const FRAME_INTERVAL = 1000 / 32;
+const NATURAL_EARTH_URL =
+  "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_land.geojson";
 
-const CITY_LIGHTS: readonly GeoPoint[] = [
-  [-122.4, 37.8], [-118.2, 34.1], [-87.6, 41.9], [-74, 40.7], [-99.1, 19.4],
-  [-58.4, -34.6], [-46.6, -23.5], [-43.2, -22.9], [-0.1, 51.5], [2.35, 48.86],
-  [4.9, 52.4], [13.4, 52.5], [12.5, 41.9], [23.7, 38], [28.98, 41],
-  [31.2, 30], [37.6, 55.8], [44.4, 33.3], [46.7, 24.7], [55.3, 25.2],
-  [72.9, 19.1], [77.2, 28.6], [77.6, 12.97], [88.4, 22.6], [90.4, 23.8],
-  [100.5, 13.75], [103.8, 1.35], [106.8, -6.2], [116.4, 39.9], [121.5, 31.2],
-  [114.2, 22.3], [126.98, 37.56], [139.7, 35.7], [151.2, -33.9], [144.96, -37.8],
-  [18.4, -33.9], [28.0, -26.2], [36.8, -1.3], [3.4, 6.5], [32.6, 0.35],
+/*
+ * Immediate offline fallback. It is deliberately complete enough to make the
+ * planet readable even before Natural Earth finishes loading or when the CDN
+ * is unavailable. The high-detail Natural Earth coastlines replace these rings
+ * as soon as the request succeeds.
+ */
+const FALLBACK_LAND: readonly LandShape[] = [
+  [
+    [-168, 72], [-155, 68], [-145, 61], [-137, 57], [-130, 52], [-125, 46],
+    [-124, 39], [-117, 32], [-110, 27], [-101, 22], [-92, 19], [-85, 22],
+    [-81, 27], [-80, 33], [-76, 39], [-68, 45], [-60, 51], [-63, 58],
+    [-75, 63], [-91, 69], [-112, 73], [-138, 76], [-158, 75],
+  ],
+  [
+    [-82, 12], [-76, 9], [-72, 4], [-69, -3], [-66, -10], [-62, -18],
+    [-58, -25], [-54, -32], [-57, -39], [-64, -48], [-69, -54], [-73, -51],
+    [-76, -42], [-78, -31], [-79, -19], [-81, -7],
+  ],
+  [
+    [-12, 36], [-6, 43], [2, 48], [10, 53], [20, 58], [32, 61], [46, 64],
+    [61, 68], [78, 71], [97, 72], [116, 67], [135, 61], [151, 54], [168, 47],
+    [171, 41], [158, 36], [145, 32], [132, 27], [122, 22], [111, 20], [103, 13],
+    [95, 9], [87, 7], [80, 8], [75, 15], [69, 21], [61, 25], [52, 30],
+    [43, 34], [35, 36], [28, 39], [20, 41], [12, 43], [4, 42], [-4, 40],
+  ],
+  [
+    [-17, 35], [-8, 37], [2, 37], [12, 35], [23, 31], [31, 25], [37, 17],
+    [42, 10], [43, 2], [40, -7], [36, -16], [31, -24], [24, -31], [15, -35],
+    [7, -34], [-1, -29], [-7, -22], [-11, -13], [-14, -3], [-16, 9], [-17, 23],
+  ],
+  [[112, -11], [121, -12], [132, -14], [141, -18], [148, -24], [153, -32], [148, -39], [139, -43], [129, -41], [120, -35], [114, -26]],
+  [[-59, 82], [-45, 83], [-31, 79], [-22, 73], [-20, 65], [-28, 60], [-40, 58], [-52, 62], [-62, 70]],
+  [[-10, 50], [-7, 55], [-4, 59], [0, 57], [2, 53], [-2, 50]],
+  [[47, -13], [50, -16], [51, -21], [49, -26], [46, -23]],
+  [[129, 31], [134, 33], [139, 36], [143, 41], [145, 44], [141, 46], [136, 42], [132, 37]],
+  [[95, 5], [102, 3], [109, 1], [116, 0], [123, -5], [119, -9], [111, -7], [104, -5], [98, -1]],
+  [[-180, -69], [-150, -72], [-120, -75], [-90, -73], [-60, -76], [-30, -73], [0, -75], [30, -72], [60, -70], [90, -72], [120, -75], [150, -72], [180, -69]],
 ];
 
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.max(minimum, Math.min(maximum, value));
+const CITY_LIGHTS: readonly GeoPoint[] = [
+  [-74, 40.7], [-118.2, 34.1], [-87.6, 41.9], [-99.1, 19.4], [-46.6, -23.5],
+  [-58.4, -34.6], [-0.1, 51.5], [2.35, 48.86], [4.9, 52.37], [13.4, 52.5],
+  [12.5, 41.9], [29, 41], [31.2, 30], [37.6, 55.8], [28.05, -26.2],
+  [77.2, 28.6], [72.9, 19.1], [77.6, 12.97], [88.36, 22.57], [90.4, 23.8],
+  [116.4, 39.9], [121.5, 31.2], [113.3, 23.1], [139.7, 35.7], [135.5, 34.7],
+  [126.98, 37.56], [103.8, 1.35], [106.8, -6.2], [100.5, 13.75], [151.2, -33.9],
+];
+
+function parseLand(data: GeoJsonCollection): LandShape[] {
+  const shapes: LandShape[] = [];
+
+  for (const feature of data.features ?? []) {
+    const geometry = feature.geometry;
+    if (!geometry) continue;
+
+    if (geometry.type === "Polygon") {
+      const polygon = geometry.coordinates as number[][][];
+      const exterior = polygon[0];
+      if (exterior?.length >= 3) {
+        shapes.push(exterior.map((point) => [point[0], point[1]] as const));
+      }
+      continue;
+    }
+
+    const multipolygon = geometry.coordinates as number[][][][];
+    for (const polygon of multipolygon) {
+      const exterior = polygon[0];
+      if (exterior?.length >= 3) {
+        shapes.push(exterior.map((point) => [point[0], point[1]] as const));
+      }
+    }
+  }
+
+  return shapes.length > 20 ? shapes : [...FALLBACK_LAND];
 }
 
-function projectPoint(
+function cameraPoint(
   point: GeoPoint,
   rotation: number,
-  center: number,
-  radius: number,
-): ProjectedPoint {
+  tilt: number,
+): CameraPoint {
   const longitude = point[0] * DEG - rotation;
   const latitude = point[1] * DEG;
   const sinLatitude = Math.sin(latitude);
   const cosLatitude = Math.cos(latitude);
-  const sinTilt = Math.sin(TILT);
-  const cosTilt = Math.cos(TILT);
+  const sinTilt = Math.sin(tilt);
+  const cosTilt = Math.cos(tilt);
   const cosLongitude = Math.cos(longitude);
 
-  const depth = sinTilt * sinLatitude + cosTilt * cosLatitude * cosLongitude;
-
   return {
-    x: center + radius * cosLatitude * Math.sin(longitude),
-    y: center - radius * (cosTilt * sinLatitude - sinTilt * cosLatitude * cosLongitude),
-    visible: depth > 0,
-    depth,
+    x: cosLatitude * Math.sin(longitude),
+    y: cosTilt * sinLatitude - sinTilt * cosLatitude * cosLongitude,
+    z: sinTilt * sinLatitude + cosTilt * cosLatitude * cosLongitude,
   };
 }
 
-function drawCurve(
+function screenPoint(
+  point: CameraPoint,
+  center: number,
+  radius: number,
+): readonly [number, number] {
+  return [center + radius * point.x, center - radius * point.y];
+}
+
+function horizonIntersection(a: CameraPoint, b: CameraPoint): CameraPoint {
+  const denominator = a.z - b.z;
+  const amount = Math.abs(denominator) < 1e-8 ? 0.5 : a.z / denominator;
+  const x = a.x + (b.x - a.x) * amount;
+  const y = a.y + (b.y - a.y) * amount;
+  const length = Math.hypot(x, y) || 1;
+  return { x: x / length, y: y / length, z: 0 };
+}
+
+function visibleSegments(
+  shape: LandShape,
+  rotation: number,
+  tilt: number,
+): CameraPoint[][] {
+  if (shape.length < 3) return [];
+
+  const projected = shape.map((point) => cameraPoint(point, rotation, tilt));
+  const segments: CameraPoint[][] = [];
+  let segment: CameraPoint[] = [];
+
+  for (let index = 0; index < projected.length; index += 1) {
+    const current = projected[index];
+    const next = projected[(index + 1) % projected.length];
+    const currentVisible = current.z >= 0;
+    const nextVisible = next.z >= 0;
+
+    if (currentVisible && segment.length === 0) segment.push(current);
+
+    if (currentVisible && nextVisible) {
+      segment.push(next);
+      continue;
+    }
+
+    if (currentVisible !== nextVisible) {
+      const intersection = horizonIntersection(current, next);
+      segment.push(intersection);
+
+      if (currentVisible) {
+        if (segment.length >= 3) segments.push(segment);
+        segment = [];
+      } else {
+        segment = [intersection, next];
+      }
+    }
+  }
+
+  if (segment.length >= 3) {
+    if (segments.length > 0) {
+      const first = segments[0];
+      segments[0] = [...segment, ...first];
+    } else {
+      segments.push(segment);
+    }
+  }
+
+  return segments;
+}
+
+function traceSegment(
+  context: CanvasRenderingContext2D,
+  segment: readonly CameraPoint[],
+  center: number,
+  radius: number,
+): void {
+  if (segment.length < 3) return;
+  const first = screenPoint(segment[0], center, radius);
+  context.beginPath();
+  context.moveTo(first[0], first[1]);
+
+  for (let index = 1; index < segment.length; index += 1) {
+    const point = screenPoint(segment[index], center, radius);
+    context.lineTo(point[0], point[1]);
+  }
+
+  context.closePath();
+}
+
+function drawCoordinateCurve(
   context: CanvasRenderingContext2D,
   points: readonly GeoPoint[],
   rotation: number,
+  tilt: number,
   center: number,
   radius: number,
 ): void {
   let drawing = false;
   context.beginPath();
 
-  for (const point of points) {
-    const projected = projectPoint(point, rotation, center, radius);
-    if (!projected.visible) {
+  for (const geoPoint of points) {
+    const point = cameraPoint(geoPoint, rotation, tilt);
+    if (point.z <= 0) {
       drawing = false;
       continue;
     }
 
+    const [x, y] = screenPoint(point, center, radius);
     if (!drawing) {
-      context.moveTo(projected.x, projected.y);
+      context.moveTo(x, y);
       drawing = true;
     } else {
-      context.lineTo(projected.x, projected.y);
+      context.lineTo(x, y);
     }
   }
 
   context.stroke();
 }
 
-function loadTexture(): Promise<TextureSource> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.decoding = "async";
-
-    image.onload = () => {
-      const surface = document.createElement("canvas");
-      surface.width = image.naturalWidth;
-      surface.height = image.naturalHeight;
-      const context = surface.getContext("2d", { willReadFrequently: true });
-
-      if (!context) {
-        reject(new Error("Earth texture canvas is unavailable."));
-        return;
-      }
-
-      context.drawImage(image, 0, 0);
-      const data = context.getImageData(0, 0, surface.width, surface.height);
-      resolve({ pixels: data.data, width: surface.width, height: surface.height });
-    };
-
-    image.onerror = () => reject(new Error("Earth texture failed to decode."));
-    image.src = earthTextureDataUri;
-  });
+function seededNoise(value: number): number {
+  const result = Math.sin(value * 12.9898) * 43758.5453;
+  return result - Math.floor(result);
 }
 
-function buildProjectionLookup(
-  context: CanvasRenderingContext2D,
-  size: number,
-  textureHeight: number,
-): ProjectionLookup {
-  const center = size / 2;
-  const radius = size * 0.455;
-  const sinTilt = Math.sin(TILT);
-  const cosTilt = Math.cos(TILT);
-
-  const pixelIndexes: number[] = [];
-  const longitudeOffsets: number[] = [];
-  const textureRows: number[] = [];
-  const diffuse: number[] = [];
-  const edge: number[] = [];
-
-  const minimum = Math.max(0, Math.floor(center - radius));
-  const maximum = Math.min(size - 1, Math.ceil(center + radius));
-
-  // Fixed upper-left studio light. It gives the terrain shape and preserves the
-  // dark intelligence-dashboard look without flattening the satellite image.
-  const lightX = -0.48;
-  const lightY = -0.36;
-  const lightZ = 0.80;
-  const lightLength = Math.hypot(lightX, lightY, lightZ);
-
-  for (let y = minimum; y <= maximum; y += 1) {
-    const normalizedY = (y + 0.5 - center) / radius;
-
-    for (let x = minimum; x <= maximum; x += 1) {
-      const normalizedX = (x + 0.5 - center) / radius;
-      const distanceSquared = normalizedX * normalizedX + normalizedY * normalizedY;
-      if (distanceSquared > 1) continue;
-
-      const z = Math.sqrt(1 - distanceSquared);
-      const worldY = -normalizedY;
-      const sinLatitude = clamp(cosTilt * worldY + sinTilt * z, -1, 1);
-      const latitude = Math.asin(sinLatitude);
-      const longitudeReference = cosTilt * z - sinTilt * worldY;
-      const longitudeOffset = Math.atan2(normalizedX, longitudeReference);
-      const textureRow = Math.round((0.5 - latitude / Math.PI) * (textureHeight - 1));
-
-      const illumination = Math.max(
-        0,
-        (normalizedX * lightX + normalizedY * lightY + z * lightZ) / lightLength,
-      );
-
-      pixelIndexes.push((y * size + x) * 4);
-      longitudeOffsets.push(longitudeOffset);
-      textureRows.push(textureRow);
-      diffuse.push(illumination);
-      edge.push(Math.pow(z, 0.36));
-    }
-  }
-
-  return {
-    size,
-    pixelIndexes: Uint32Array.from(pixelIndexes),
-    longitudeOffsets: Float32Array.from(longitudeOffsets),
-    textureRows: Uint16Array.from(textureRows),
-    diffuse: Float32Array.from(diffuse),
-    edge: Float32Array.from(edge),
-    imageData: context.createImageData(size, size),
-  };
-}
-
-function renderTexturedSphere(
-  context: CanvasRenderingContext2D,
-  lookup: ProjectionLookup,
-  texture: TextureSource,
-  rotation: number,
-): void {
-  const output = lookup.imageData.data;
-  output.fill(0);
-
-  const normalizedRotation = ((rotation % TAU) + TAU) % TAU;
-
-  for (let index = 0; index < lookup.pixelIndexes.length; index += 1) {
-    const longitude = lookup.longitudeOffsets[index] + normalizedRotation;
-    const wrapped = ((longitude / TAU + 0.5) % 1 + 1) % 1;
-    const textureColumn = Math.min(texture.width - 1, Math.floor(wrapped * texture.width));
-    const textureIndex = (lookup.textureRows[index] * texture.width + textureColumn) * 4;
-    const outputIndex = lookup.pixelIndexes[index];
-
-    const sourceRed = texture.pixels[textureIndex];
-    const sourceGreen = texture.pixels[textureIndex + 1];
-    const sourceBlue = texture.pixels[textureIndex + 2];
-    const luminance = sourceRed * 0.2126 + sourceGreen * 0.7152 + sourceBlue * 0.0722;
-
-    const isIce = luminance > 190 && Math.abs(sourceRed - sourceBlue) < 45;
-    const isOcean = sourceBlue > sourceRed * 1.22 && sourceBlue > sourceGreen * 1.08;
-
-    let red: number;
-    let green: number;
-    let blue: number;
-
-    if (isIce) {
-      // Warm polar ice rather than a bright white patch that breaks the palette.
-      red = luminance * 0.68 + 28;
-      green = luminance * 0.56 + 19;
-      blue = luminance * 0.35 + 8;
-    } else if (isOcean) {
-      // Keep ocean topography visible, but close to black as in the reference.
-      red = sourceRed * 0.13 + luminance * 0.035 + 1;
-      green = sourceGreen * 0.17 + luminance * 0.045 + 3;
-      blue = sourceBlue * 0.19 + luminance * 0.055 + 5;
-    } else {
-      // Preserve real terrain detail while grading vegetation/desert into amber.
-      red = sourceRed * 0.31 + sourceGreen * 0.15 + luminance * 0.30 + 13;
-      green = sourceGreen * 0.25 + sourceRed * 0.08 + luminance * 0.19 + 7;
-      blue = sourceBlue * 0.10 + luminance * 0.075 + 2;
-    }
-
-    const lighting = (0.22 + lookup.diffuse[index] * 0.92) * (0.42 + lookup.edge[index] * 0.58);
-    const atmosphericGold = Math.pow(1 - lookup.edge[index], 2.4) * 16;
-
-    output[outputIndex] = clamp(red * lighting + atmosphericGold, 0, 255);
-    output[outputIndex + 1] = clamp(green * lighting + atmosphericGold * 0.48, 0, 255);
-    output[outputIndex + 2] = clamp(blue * lighting + atmosphericGold * 0.12, 0, 255);
-    output[outputIndex + 3] = 255;
-  }
-
-  context.putImageData(lookup.imageData, 0, 0);
-}
-
-function drawHudOverlay(
+function drawEarth(
   context: CanvasRenderingContext2D,
   size: number,
   rotation: number,
+  land: readonly LandShape[],
 ): void {
   const center = size / 2;
   const radius = size * 0.455;
+  const tilt = -9 * DEG;
+
+  context.clearRect(0, 0, size, size);
+  context.save();
+
+  const atmosphere = context.createRadialGradient(
+    center - radius * 0.25,
+    center - radius * 0.32,
+    radius * 0.08,
+    center,
+    center,
+    radius * 1.08,
+  );
+  atmosphere.addColorStop(0, "rgba(232, 178, 91, 0.22)");
+  atmosphere.addColorStop(0.64, "rgba(27, 22, 13, 0.025)");
+  atmosphere.addColorStop(0.91, "rgba(211, 137, 31, 0.11)");
+  atmosphere.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.fillStyle = atmosphere;
+  context.beginPath();
+  context.arc(center, center, radius * 1.08, 0, TAU);
+  context.fill();
 
   context.save();
   context.beginPath();
   context.arc(center, center, radius, 0, TAU);
   context.clip();
 
-  context.lineWidth = Math.max(0.45, size / 760);
-  context.strokeStyle = "rgba(211, 151, 55, 0.105)";
+  const ocean = context.createRadialGradient(
+    center - radius * 0.32,
+    center - radius * 0.38,
+    radius * 0.04,
+    center + radius * 0.25,
+    center + radius * 0.11,
+    radius * 1.25,
+  );
+  ocean.addColorStop(0, "#313027");
+  ocean.addColorStop(0.22, "#171b19");
+  ocean.addColorStop(0.66, "#070b0b");
+  ocean.addColorStop(1, "#010202");
+  context.fillStyle = ocean;
+  context.fillRect(center - radius, center - radius, radius * 2, radius * 2);
+
+  /* Subtle ocean relief keeps the sphere from reading as a flat black disc. */
+  context.globalAlpha = 0.08;
+  for (let index = 0; index < 190; index += 1) {
+    const angle = seededNoise(index + 17) * TAU;
+    const distance = Math.sqrt(seededNoise(index + 47)) * radius * 0.92;
+    const x = center + Math.cos(angle) * distance;
+    const y = center + Math.sin(angle) * distance;
+    context.fillStyle = index % 3 === 0 ? "#d79a3c" : "#87918a";
+    context.fillRect(x, y, Math.max(0.5, size / 760), Math.max(0.5, size / 760));
+  }
+  context.globalAlpha = 1;
+
+  /* Land is always painted, including the bundled fallback coastlines. */
+  const landGradient = context.createLinearGradient(
+    center - radius,
+    center - radius,
+    center + radius,
+    center + radius,
+  );
+  landGradient.addColorStop(0, "#77694a");
+  landGradient.addColorStop(0.3, "#544d35");
+  landGradient.addColorStop(0.64, "#303328");
+  landGradient.addColorStop(1, "#121614");
+
+  for (const shape of land) {
+    for (const segment of visibleSegments(shape, rotation, tilt)) {
+      traceSegment(context, segment, center, radius);
+      context.fillStyle = landGradient;
+      context.fill();
+
+      context.save();
+      context.clip();
+      context.globalAlpha = 0.16;
+      for (let stripe = -radius; stripe <= radius; stripe += Math.max(5, size / 42)) {
+        context.strokeStyle = stripe % 2 === 0 ? "#e0a144" : "#111812";
+        context.lineWidth = Math.max(0.45, size / 920);
+        context.beginPath();
+        context.moveTo(center - radius, center + stripe);
+        context.lineTo(center + radius, center + stripe + radius * 0.18);
+        context.stroke();
+      }
+      context.restore();
+
+      traceSegment(context, segment, center, radius);
+      context.strokeStyle = "rgba(236, 171, 70, 0.78)";
+      context.lineWidth = Math.max(0.72, size / 450);
+      context.lineJoin = "round";
+      context.shadowColor = "rgba(217, 145, 40, 0.24)";
+      context.shadowBlur = size / 150;
+      context.stroke();
+      context.shadowBlur = 0;
+    }
+  }
+
+  /* Geographic HUD grid sits above the terrain but below illumination. */
+  context.strokeStyle = "rgba(207, 148, 53, 0.13)";
+  context.lineWidth = Math.max(0.45, size / 920);
 
   for (let latitude = -60; latitude <= 60; latitude += 20) {
     const curve: GeoPoint[] = [];
     for (let longitude = -180; longitude <= 180; longitude += 2) {
       curve.push([longitude, latitude]);
     }
-    drawCurve(context, curve, rotation, center, radius);
+    drawCoordinateCurve(context, curve, rotation, tilt, center, radius);
   }
 
   for (let longitude = -180; longitude < 180; longitude += 20) {
@@ -277,86 +357,62 @@ function drawHudOverlay(
     for (let latitude = -88; latitude <= 88; latitude += 2) {
       curve.push([longitude, latitude]);
     }
-    drawCurve(context, curve, rotation, center, radius);
+    drawCoordinateCurve(context, curve, rotation, tilt, center, radius);
   }
 
   for (const city of CITY_LIGHTS) {
-    const point = projectPoint(city, rotation, center, radius);
-    if (!point.visible || point.depth < 0.2) continue;
-
-    const alpha = Math.min(0.72, 0.13 + point.depth * 0.53);
-    const pointRadius = Math.max(0.45, size / 650);
-    context.fillStyle = `rgba(247, 175, 61, ${alpha})`;
-    context.shadowColor = "rgba(247, 175, 61, 0.58)";
-    context.shadowBlur = size / 110;
+    const point = cameraPoint(city, rotation, tilt);
+    if (point.z < 0.12) continue;
+    const [x, y] = screenPoint(point, center, radius);
+    const alpha = Math.min(0.9, 0.24 + point.z * 0.66);
+    context.fillStyle = `rgba(249, 177, 59, ${alpha})`;
+    context.shadowColor = "rgba(245, 166, 48, 0.78)";
+    context.shadowBlur = size / 70;
     context.beginPath();
-    context.arc(point.x, point.y, pointRadius, 0, TAU);
+    context.arc(x, y, Math.max(0.65, size / 470), 0, TAU);
     context.fill();
   }
   context.shadowBlur = 0;
 
-  const nightShade = context.createLinearGradient(center - radius, center, center + radius, center);
-  nightShade.addColorStop(0, "rgba(255, 208, 126, 0.025)");
-  nightShade.addColorStop(0.52, "rgba(0, 0, 0, 0)");
-  nightShade.addColorStop(0.78, "rgba(0, 0, 0, 0.24)");
-  nightShade.addColorStop(1, "rgba(0, 0, 0, 0.79)");
-  context.fillStyle = nightShade;
+  const sunlight = context.createRadialGradient(
+    center - radius * 0.35,
+    center - radius * 0.42,
+    radius * 0.02,
+    center - radius * 0.12,
+    center - radius * 0.12,
+    radius * 0.88,
+  );
+  sunlight.addColorStop(0, "rgba(255, 225, 164, 0.18)");
+  sunlight.addColorStop(0.34, "rgba(244, 178, 75, 0.055)");
+  sunlight.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.fillStyle = sunlight;
   context.fillRect(center - radius, center - radius, radius * 2, radius * 2);
 
-  const vignette = context.createRadialGradient(center, center, radius * 0.62, center, center, radius);
+  const shade = context.createLinearGradient(center - radius, center, center + radius, center);
+  shade.addColorStop(0, "rgba(255, 211, 132, 0.035)");
+  shade.addColorStop(0.47, "rgba(0, 0, 0, 0)");
+  shade.addColorStop(0.73, "rgba(0, 0, 0, 0.22)");
+  shade.addColorStop(1, "rgba(0, 0, 0, 0.78)");
+  context.fillStyle = shade;
+  context.fillRect(center - radius, center - radius, radius * 2, radius * 2);
+
+  const vignette = context.createRadialGradient(center, center, radius * 0.58, center, center, radius);
   vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vignette.addColorStop(0.84, "rgba(0, 0, 0, 0.035)");
-  vignette.addColorStop(1, "rgba(0, 0, 0, 0.48)");
+  vignette.addColorStop(0.84, "rgba(0, 0, 0, 0.07)");
+  vignette.addColorStop(1, "rgba(0, 0, 0, 0.56)");
   context.fillStyle = vignette;
   context.fillRect(center - radius, center - radius, radius * 2, radius * 2);
 
   context.restore();
 
-  const highlight = context.createRadialGradient(
-    center - radius * 0.38,
-    center - radius * 0.46,
-    0,
-    center - radius * 0.38,
-    center - radius * 0.46,
-    radius * 0.72,
-  );
-  highlight.addColorStop(0, "rgba(255, 225, 171, 0.18)");
-  highlight.addColorStop(0.38, "rgba(226, 163, 67, 0.045)");
-  highlight.addColorStop(1, "rgba(0, 0, 0, 0)");
-  context.fillStyle = highlight;
-  context.beginPath();
-  context.arc(center, center, radius, 0, TAU);
-  context.fill();
-
-  context.strokeStyle = "rgba(239, 190, 104, 0.69)";
-  context.lineWidth = Math.max(0.9, size / 360);
-  context.shadowColor = "rgba(213, 142, 34, 0.30)";
-  context.shadowBlur = size / 86;
+  context.strokeStyle = "rgba(240, 189, 100, 0.76)";
+  context.lineWidth = Math.max(1, size / 330);
+  context.shadowColor = "rgba(213, 142, 34, 0.32)";
+  context.shadowBlur = size / 72;
   context.beginPath();
   context.arc(center, center, radius, 0, TAU);
   context.stroke();
-  context.shadowBlur = 0;
-}
-
-function drawLoadingEarth(context: CanvasRenderingContext2D, size: number): void {
-  const center = size / 2;
-  const radius = size * 0.455;
-  context.clearRect(0, 0, size, size);
-  const fallback = context.createRadialGradient(
-    center - radius * 0.35,
-    center - radius * 0.42,
-    radius * 0.04,
-    center,
-    center,
-    radius,
-  );
-  fallback.addColorStop(0, "#302719");
-  fallback.addColorStop(0.42, "#111413");
-  fallback.addColorStop(1, "#010202");
-  context.fillStyle = fallback;
-  context.beginPath();
-  context.arc(center, center, radius, 0, TAU);
-  context.fill();
+  context.restore();
 }
 
 function EarthCanvas(): ReactElement {
@@ -366,80 +422,58 @@ function EarthCanvas(): ReactElement {
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
 
-    const context = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
+    const context = canvas.getContext("2d", { alpha: true });
     if (!context) return undefined;
 
-    let cancelled = false;
     let frame = 0;
-    let texture: TextureSource | null = null;
-    let lookup: ProjectionLookup | null = null;
-    let rotation = 18 * DEG;
+    let rotation = 22 * DEG;
     let previousTime = performance.now();
-    let previousDraw = 0;
+    let lastPaint = 0;
+    let land: readonly LandShape[] = FALLBACK_LAND;
+    let disposed = false;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const ensureCanvas = (): number => {
-      const bounds = canvas.getBoundingClientRect();
-      const cssSize = Math.max(1, Math.min(bounds.width, bounds.height));
-      const renderSize = Math.max(300, Math.min(INTERNAL_MAX_SIZE, Math.round(cssSize * 1.32)));
-
-      if (canvas.width !== renderSize || canvas.height !== renderSize) {
-        canvas.width = renderSize;
-        canvas.height = renderSize;
-        lookup = null;
-      }
-
-      return renderSize;
-    };
+    const controller = new AbortController();
+    fetch(NATURAL_EARTH_URL, { signal: controller.signal, cache: "force-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Natural Earth request failed: ${response.status}`);
+        return response.json() as Promise<GeoJsonCollection>;
+      })
+      .then((data) => {
+        if (!disposed) land = parseLand(data);
+      })
+      .catch(() => {
+        /* The bundled fallback is intentionally retained on network failure. */
+      });
 
     const render = (time: number): void => {
-      if (cancelled) return;
-
-      if (!reduceMotion && time - previousDraw < FRAME_INTERVAL) {
-        frame = window.requestAnimationFrame(render);
-        return;
-      }
-
-      const size = ensureCanvas();
-      const elapsed = Math.min(80, time - previousTime);
+      const elapsed = Math.min(50, time - previousTime);
       previousTime = time;
-      previousDraw = time;
+      if (!reduceMotion) rotation += elapsed * 0.00007;
 
-      if (!reduceMotion) rotation += elapsed * 0.000042;
+      /* 30 fps is sufficient for the slow globe and keeps Canvas inexpensive. */
+      if (reduceMotion || time - lastPaint >= 32) {
+        const bounds = canvas.getBoundingClientRect();
+        const cssSize = Math.max(1, Math.min(bounds.width, bounds.height));
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.6);
+        const renderSize = Math.max(280, Math.round(cssSize * pixelRatio));
 
-      if (!texture) {
-        drawLoadingEarth(context, size);
-      } else {
-        if (!lookup || lookup.size !== size) {
-          lookup = buildProjectionLookup(context, size, texture.height);
+        if (canvas.width !== renderSize || canvas.height !== renderSize) {
+          canvas.width = renderSize;
+          canvas.height = renderSize;
         }
-        renderTexturedSphere(context, lookup, texture, rotation);
-        drawHudOverlay(context, size, rotation);
+
+        drawEarth(context, renderSize, rotation, land);
+        lastPaint = time;
       }
 
       if (!reduceMotion) frame = window.requestAnimationFrame(render);
     };
 
-    void loadTexture()
-      .then((loadedTexture) => {
-        if (cancelled) return;
-        texture = loadedTexture;
-        const size = ensureCanvas();
-        lookup = buildProjectionLookup(context, size, texture.height);
-
-        if (reduceMotion) {
-          renderTexturedSphere(context, lookup, texture, rotation);
-          drawHudOverlay(context, size, rotation);
-        }
-      })
-      .catch(() => {
-        // The local data URI should always decode. The fallback globe remains if
-        // a browser cannot decode WebP for any reason.
-      });
-
     frame = window.requestAnimationFrame(render);
     return () => {
-      cancelled = true;
+      disposed = true;
+      controller.abort();
       window.cancelAnimationFrame(frame);
     };
   }, []);
