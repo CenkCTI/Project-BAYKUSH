@@ -1,0 +1,90 @@
+/* Four-system landing row: CİTEM, İDRAK, KARARGÂH and RASAT. */
+.modules {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.module-card {
+  min-width: 0;
+  padding: 18px 16px;
+  grid-template-columns: 78px minmax(0, 1fr) 42px;
+  gap: 13px;
+}
+
+.module-icon {
+  width: 74px;
+  height: 74px;
+}
+
+.module-icon svg {
+  width: 49px;
+  height: 49px;
+}
+
+.module-copy {
+  min-width: 0;
+}
+
+.module-copy h2 {
+  font-size: clamp(20px, 1.65vw, 25px);
+  white-space: nowrap;
+}
+
+.module-copy p {
+  min-height: 31px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.module-bars {
+  gap: 3px;
+}
+
+.module-bars i {
+  width: 3px;
+}
+
+@media (max-width: 1260px) {
+  .modules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .module-card {
+    grid-template-columns: 92px minmax(0, 1fr) 64px;
+    padding: 19px 20px;
+    gap: 18px;
+  }
+
+  .module-icon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .module-icon svg {
+    width: 55px;
+    height: 55px;
+  }
+
+  .module-copy h2 {
+    font-size: 27px;
+  }
+
+  .module-copy p {
+    min-height: auto;
+    font-size: 13px;
+  }
+
+  .module-bars {
+    gap: 5px;
+  }
+
+  .module-bars i {
+    width: 4px;
+  }
+}
+
+@media (max-width: 940px) {
+  .modules {
+    grid-template-columns: 1fr;
+  }
+}
