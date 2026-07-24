@@ -1,0 +1,43 @@
+/* Approved hero owl: the exact raster artwork extracted from the supplied reference. */
+.visual::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  z-index: 1;
+  width: 730px;
+  max-width: 112%;
+  aspect-ratio: 590 / 332;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-image: var(--owl-reference-image);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 0 9px rgba(213, 142, 34, 0.08));
+}
+
+/* Keep the original vector markup as a semantic/fallback layer, but do not render it. */
+.visual > .owl {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* The globe remains a separate foreground SVG, so its map can continue rotating. */
+.globe-shell {
+  isolation: isolate;
+}
+
+@media (max-width: 600px) {
+  .visual::before {
+    top: 14px;
+    width: 610px;
+    max-width: 145%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-track {
+    animation: none;
+  }
+}
