@@ -1,4 +1,4 @@
-type IconKind = "cluster" | "graph" | "radar" | "network" | "rings";
+type IconKind = "cluster" | "graph" | "radar" | "network" | "rings" | "eye";
 
 type RailCard = {
   index: string;
@@ -71,6 +71,13 @@ const modules: Array<{
     state: "STANDBY",
     icon: "rings",
   },
+  {
+    id: "rasat",
+    name: "RASAT",
+    subtitle: "Reports and research",
+    state: "ACTIVE",
+    icon: "eye",
+  },
 ];
 
 function ClusterIcon() {
@@ -138,11 +145,26 @@ function RingsIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <path
+        d="M7 30c6.6-11.2 14.3-16.8 23-16.8S46.4 18.8 53 30c-6.6 11.2-14.3 16.8-23 16.8S13.6 41.2 7 30Z"
+        style={{ fill: "none" }}
+      />
+      <circle cx="30" cy="30" r="9" style={{ fill: "none" }} />
+      <circle cx="30" cy="30" r="2.8" />
+      <path d="M13 18 8 13M47 18l5-5M13 42l-5 5M47 42l5 5" style={{ fill: "none" }} />
+    </svg>
+  );
+}
+
 function Icon({ kind }: { kind: IconKind }) {
   if (kind === "cluster") return <ClusterIcon />;
   if (kind === "graph") return <GraphIcon />;
   if (kind === "radar") return <RadarIcon />;
   if (kind === "network") return <NetworkIcon />;
+  if (kind === "eye") return <EyeIcon />;
   return <RingsIcon />;
 }
 
