@@ -1,10 +1,9 @@
 /*
  * Photorealistic rotating Earth for the BAYKUSH hero.
  *
- * The previous version applied the texture to the full 342px shell while the
- * SVG grid/rim occupied only the 292px circle inside its 420px viewBox. That
- * produced the visible "black ring + small globe" defect. The texture now fills
- * the actual sphere and the SVG overlay is scaled to the same diameter.
+ * The Earth surface uses NASA's Blue Marble natural-colour base map. The former
+ * Black Marble night-lights texture was removed because it rendered populated
+ * areas as isolated yellow spots instead of showing complete land masses.
  */
 .globe-shell {
   z-index: 4;
@@ -23,12 +22,11 @@
 }
 
 /*
- * NASA Black Marble / Earth-at-night equirectangular texture.
+ * NASA Blue Marble: Next Generation, December, 5400x2700.
  *
  * The pseudo-element is four globe-widths wide. Each map tile occupies two
- * globe-widths, preserving the source image's 2:1 aspect ratio. Translating by
- * half the pseudo-element advances exactly one complete map, creating a smooth
- * and seamless rotation without stretching the continents.
+ * globe-widths, preserving the source image's true 2:1 equirectangular ratio.
+ * Translating by half the pseudo-element advances exactly one complete map.
  */
 .globe-shell::before {
   content: "";
@@ -38,22 +36,24 @@
   left: 0;
   width: 400%;
   z-index: 0;
-  background-image: url("https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.3600x1800.jpg");
-  background-repeat: repeat-x;
-  background-size: 50% 100%;
-  background-position: 0 50%;
+  background-image:
+    linear-gradient(rgba(2, 4, 4, 0.34), rgba(2, 4, 4, 0.5)),
+    url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/december/world.200412.3x5400x2700.jpg");
+  background-repeat: repeat-x, repeat-x;
+  background-size: 50% 100%, 50% 100%;
+  background-position: 0 50%, 0 50%;
+  background-blend-mode: multiply, normal;
   filter:
-    grayscale(0.76)
-    sepia(0.92)
-    saturate(1.18)
-    hue-rotate(-8deg)
-    brightness(0.78)
-    contrast(1.38);
+    grayscale(0.78)
+    sepia(0.24)
+    saturate(0.84)
+    brightness(0.58)
+    contrast(1.52);
   opacity: 0.98;
   transform: translate3d(-12.5%, 0, 0);
   transform-origin: left center;
   will-change: transform;
-  animation: realistic-earth-spin 38s linear infinite;
+  animation: realistic-earth-spin 42s linear infinite;
 }
 
 /* Directional illumination, spherical falloff and a restrained gold atmosphere. */
@@ -65,20 +65,19 @@
   border-radius: 50%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 34% 13%, rgba(255, 226, 174, 0.28), transparent 23%),
-    radial-gradient(circle at 43% 42%, transparent 0 48%, rgba(0, 0, 0, 0.11) 70%, rgba(0, 0, 0, 0.67) 100%),
-    linear-gradient(94deg, rgba(255, 191, 84, 0.04) 0%, transparent 51%, rgba(0, 0, 0, 0.13) 68%, rgba(0, 0, 0, 0.54) 100%);
+    radial-gradient(circle at 34% 13%, rgba(255, 226, 174, 0.22), transparent 24%),
+    radial-gradient(circle at 43% 42%, transparent 0 48%, rgba(0, 0, 0, 0.1) 70%, rgba(0, 0, 0, 0.65) 100%),
+    linear-gradient(94deg, rgba(255, 191, 84, 0.025) 0%, transparent 52%, rgba(0, 0, 0, 0.11) 69%, rgba(0, 0, 0, 0.51) 100%);
   box-shadow:
-    inset 18px 10px 30px rgba(255, 199, 105, 0.08),
-    inset -38px -8px 58px rgba(0, 0, 0, 0.62),
-    inset 0 0 0 1px rgba(238, 187, 98, 0.36),
-    inset 0 0 15px rgba(238, 187, 98, 0.11);
+    inset 18px 10px 30px rgba(255, 199, 105, 0.06),
+    inset -38px -8px 58px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(238, 187, 98, 0.34),
+    inset 0 0 15px rgba(238, 187, 98, 0.09);
 }
 
 /*
  * The original SVG circle has a 292px diameter inside a 420px viewBox.
- * Scaling by 1.42 aligns the grid and rim with the full globe shell and removes
- * the incorrect inner-circle appearance shown in Preview.
+ * Scaling by 1.42 aligns the HUD grid and rim with the complete Earth surface.
  */
 .globe {
   position: absolute;
@@ -91,10 +90,10 @@
   transform: scale(1.42);
   transform-origin: 50% 50%;
   shape-rendering: geometricPrecision;
-  filter: drop-shadow(0 0 7px rgba(218, 145, 36, 0.14));
+  filter: drop-shadow(0 0 7px rgba(218, 145, 36, 0.12));
 }
 
-/* The satellite texture supplies the surface; SVG is retained only for HUD lines. */
+/* The satellite texture supplies the surface; SVG remains only as a HUD overlay. */
 .globe-body,
 .globe-aura,
 .map-track,
@@ -112,17 +111,17 @@
 .globe-grid ellipse,
 .globe-grid path {
   fill: none !important;
-  stroke: rgba(220, 159, 60, 0.13) !important;
-  stroke-width: 0.68 !important;
+  stroke: rgba(220, 159, 60, 0.12) !important;
+  stroke-width: 0.66 !important;
 }
 
 .globe-rim {
   fill: none !important;
-  stroke: rgba(239, 190, 104, 0.58) !important;
-  stroke-width: 1.12 !important;
+  stroke: rgba(239, 190, 104, 0.56) !important;
+  stroke-width: 1.1 !important;
   filter:
-    drop-shadow(0 0 3px rgba(239, 190, 104, 0.29))
-    drop-shadow(0 0 8px rgba(213, 142, 34, 0.11));
+    drop-shadow(0 0 3px rgba(239, 190, 104, 0.27))
+    drop-shadow(0 0 8px rgba(213, 142, 34, 0.1));
 }
 
 @keyframes realistic-earth-spin {
@@ -149,12 +148,12 @@
 @keyframes globe-grid-drift {
   from {
     transform: translateX(-0.7px) scaleX(0.997);
-    opacity: 0.72;
+    opacity: 0.7;
   }
 
   to {
     transform: translateX(0.7px) scaleX(1.003);
-    opacity: 0.94;
+    opacity: 0.92;
   }
 }
 
@@ -164,7 +163,7 @@
   }
 
   .globe-shell::before {
-    animation-duration: 44s;
+    animation-duration: 48s;
   }
 }
 
