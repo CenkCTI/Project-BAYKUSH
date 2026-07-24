@@ -1,9 +1,9 @@
 /*
  * Photorealistic rotating Earth for the BAYKUSH hero.
  *
- * The Earth surface uses NASA's Blue Marble natural-colour base map. The former
- * Black Marble night-lights texture was removed because it rendered populated
- * areas as isolated yellow spots instead of showing complete land masses.
+ * The surface now uses NASA SVS's explicit cloud-free equirectangular Earth
+ * texture. This avoids the grey cloud/snow layer that obscured the continents
+ * in the previous December Blue Marble source.
  */
 .globe-shell {
   z-index: 4;
@@ -22,11 +22,10 @@
 }
 
 /*
- * NASA Blue Marble: Next Generation, December, 5400x2700.
+ * NASA/Goddard SVS cloud-free Earth texture, 2048x1024 (2:1).
  *
- * The pseudo-element is four globe-widths wide. Each map tile occupies two
- * globe-widths, preserving the source image's true 2:1 equirectangular ratio.
- * Translating by half the pseudo-element advances exactly one complete map.
+ * The pseudo-element is four globe-widths wide. Each repeated map occupies two
+ * globe-widths, preserving the source's true equirectangular aspect ratio.
  */
 .globe-shell::before {
   content: "";
@@ -37,19 +36,19 @@
   width: 400%;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(2, 4, 4, 0.34), rgba(2, 4, 4, 0.5)),
-    url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/december/world.200412.3x5400x2700.jpg");
+    linear-gradient(rgba(3, 4, 4, 0.12), rgba(2, 3, 3, 0.32)),
+    url("https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/earth_noClouds.0330.jpg");
   background-repeat: repeat-x, repeat-x;
   background-size: 50% 100%, 50% 100%;
   background-position: 0 50%, 0 50%;
   background-blend-mode: multiply, normal;
   filter:
-    grayscale(0.78)
-    sepia(0.24)
-    saturate(0.84)
-    brightness(0.58)
-    contrast(1.52);
-  opacity: 0.98;
+    saturate(0.72)
+    sepia(0.2)
+    hue-rotate(-7deg)
+    brightness(0.7)
+    contrast(1.36);
+  opacity: 1;
   transform: translate3d(-12.5%, 0, 0);
   transform-origin: left center;
   will-change: transform;
@@ -65,19 +64,19 @@
   border-radius: 50%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 34% 13%, rgba(255, 226, 174, 0.22), transparent 24%),
-    radial-gradient(circle at 43% 42%, transparent 0 48%, rgba(0, 0, 0, 0.1) 70%, rgba(0, 0, 0, 0.65) 100%),
-    linear-gradient(94deg, rgba(255, 191, 84, 0.025) 0%, transparent 52%, rgba(0, 0, 0, 0.11) 69%, rgba(0, 0, 0, 0.51) 100%);
+    radial-gradient(circle at 34% 13%, rgba(255, 226, 174, 0.2), transparent 24%),
+    radial-gradient(circle at 43% 42%, transparent 0 49%, rgba(0, 0, 0, 0.08) 70%, rgba(0, 0, 0, 0.61) 100%),
+    linear-gradient(94deg, rgba(255, 191, 84, 0.02) 0%, transparent 53%, rgba(0, 0, 0, 0.09) 70%, rgba(0, 0, 0, 0.48) 100%);
   box-shadow:
-    inset 18px 10px 30px rgba(255, 199, 105, 0.06),
-    inset -38px -8px 58px rgba(0, 0, 0, 0.6),
+    inset 18px 10px 30px rgba(255, 199, 105, 0.055),
+    inset -36px -8px 56px rgba(0, 0, 0, 0.57),
     inset 0 0 0 1px rgba(238, 187, 98, 0.34),
-    inset 0 0 15px rgba(238, 187, 98, 0.09);
+    inset 0 0 15px rgba(238, 187, 98, 0.085);
 }
 
 /*
- * The original SVG circle has a 292px diameter inside a 420px viewBox.
- * Scaling by 1.42 aligns the HUD grid and rim with the complete Earth surface.
+ * The source SVG circle is smaller than its 420px viewBox. Scaling the HUD
+ * overlay aligns the latitude/longitude grid and rim with the full Earth.
  */
 .globe {
   position: absolute;
@@ -111,16 +110,16 @@
 .globe-grid ellipse,
 .globe-grid path {
   fill: none !important;
-  stroke: rgba(220, 159, 60, 0.12) !important;
-  stroke-width: 0.66 !important;
+  stroke: rgba(220, 159, 60, 0.11) !important;
+  stroke-width: 0.64 !important;
 }
 
 .globe-rim {
   fill: none !important;
-  stroke: rgba(239, 190, 104, 0.56) !important;
-  stroke-width: 1.1 !important;
+  stroke: rgba(239, 190, 104, 0.55) !important;
+  stroke-width: 1.08 !important;
   filter:
-    drop-shadow(0 0 3px rgba(239, 190, 104, 0.27))
+    drop-shadow(0 0 3px rgba(239, 190, 104, 0.26))
     drop-shadow(0 0 8px rgba(213, 142, 34, 0.1));
 }
 
@@ -148,12 +147,12 @@
 @keyframes globe-grid-drift {
   from {
     transform: translateX(-0.7px) scaleX(0.997);
-    opacity: 0.7;
+    opacity: 0.68;
   }
 
   to {
     transform: translateX(0.7px) scaleX(1.003);
-    opacity: 0.92;
+    opacity: 0.9;
   }
 }
 
