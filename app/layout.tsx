@@ -4,6 +4,7 @@ import { owlDataUri } from "./owl-data";
 import "./globals.css";
 import "./module-grid.css";
 import "./owl-reference.css";
+import "./globe-animation.css";
 
 export const metadata: Metadata = {
   title: "Project BAYKUSH | Intelligence Becomes Direction",
