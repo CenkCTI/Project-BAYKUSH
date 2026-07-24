@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./module-grid.css";
 
 export const metadata: Metadata = {
   title: "Project BAYKUSH | Intelligence Becomes Direction",
