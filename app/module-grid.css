@@ -1,47 +1,187 @@
-/* Four-system landing row: CİTEM, İDRAK, KARARGÂH and RASAT. */
+/* Four-system landing row: DURU GÖRÜ, CİTEM, ANLAK and KARARGÂH. */
 .modules {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
   gap: 14px;
 }
 
 .module-card {
   min-width: 0;
-  padding: 18px 16px;
-  grid-template-columns: 78px minmax(0, 1fr) 42px;
-  gap: 13px;
+  min-height: 292px;
+  overflow: hidden;
+}
+
+.module-card-active {
+  padding: 20px 18px;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 18px;
+  border-color: rgba(213, 142, 34, 0.34);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(213, 142, 34, 0.075), transparent 34%),
+    linear-gradient(180deg, rgba(7, 9, 9, 0.99), rgba(5, 7, 7, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.012),
+    0 0 22px rgba(213, 142, 34, 0.035);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.module-card-active:hover {
+  transform: translateY(-2px);
+  border-color: rgba(241, 173, 57, 0.58);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.018),
+    0 8px 28px rgba(0, 0, 0, 0.24),
+    0 0 26px rgba(213, 142, 34, 0.08);
+}
+
+.module-active-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.module-number {
+  color: var(--gold-bright);
+  font: 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.14em;
 }
 
 .module-icon {
-  width: 74px;
-  height: 74px;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
 }
 
 .module-icon svg {
-  width: 49px;
-  height: 49px;
+  width: 39px;
+  height: 39px;
 }
 
 .module-copy {
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .module-copy h2 {
-  font-size: clamp(20px, 1.65vw, 25px);
+  margin: 0;
+  color: #f0e5d7;
+  font: 500 clamp(20px, 1.55vw, 25px) ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .module-copy p {
-  min-height: 31px;
-  font-size: 11px;
-  line-height: 1.4;
+  min-height: 0;
 }
 
-.module-bars {
-  gap: 3px;
+.module-copy .module-descriptor {
+  margin: 9px 0 0;
+  color: #c79a52;
+  font: 10px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.075em;
 }
 
-.module-bars i {
-  width: 3px;
+.module-copy .module-description {
+  margin: 17px 0 22px;
+  color: #9f978b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.module-action {
+  width: 100%;
+  min-height: 39px;
+  margin-top: auto;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(213, 142, 34, 0.3);
+  background: rgba(4, 6, 6, 0.58);
+  color: var(--gold-bright);
+  font: 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.module-action b {
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 0.8;
+}
+
+.module-action:hover,
+.module-action:focus-visible {
+  border-color: rgba(241, 173, 57, 0.66);
+  background: rgba(213, 142, 34, 0.075);
+  color: #ffd18a;
+  outline: none;
+}
+
+.module-card-in-progress {
+  padding: 22px;
+  display: flex;
+  grid-template-columns: 1fr;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  border-color: rgba(213, 142, 34, 0.105);
+  background:
+    repeating-linear-gradient(
+      -24deg,
+      rgba(213, 142, 34, 0.016) 0,
+      rgba(213, 142, 34, 0.016) 1px,
+      transparent 1px,
+      transparent 11px
+    ),
+    radial-gradient(circle at 50% 42%, rgba(213, 142, 34, 0.026), transparent 45%),
+    linear-gradient(180deg, rgba(3, 5, 5, 0.985), rgba(2, 3, 3, 0.995));
+  box-shadow:
+    inset 0 0 42px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.006);
+  cursor: default;
+  opacity: 0.68;
+  filter: brightness(0.62) saturate(0.72);
+}
+
+.module-card-in-progress:hover {
+  transform: none;
+  border-color: rgba(213, 142, 34, 0.105);
+  box-shadow:
+    inset 0 0 42px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.006);
+}
+
+.module-card-in-progress::before,
+.module-card-in-progress::after {
+  border-color: rgba(213, 142, 34, 0.12);
+}
+
+.module-initial {
+  color: rgba(218, 188, 142, 0.52);
+  font: 300 clamp(68px, 6vw, 94px)/0.9 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px rgba(213, 142, 34, 0.06);
+}
+
+.module-progress-state {
+  padding: 7px 11px;
+  border: 1px solid rgba(213, 142, 34, 0.2);
+  color: rgba(213, 142, 34, 0.68);
+  font: 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.19em;
 }
 
 @media (max-width: 1260px) {
@@ -50,41 +190,99 @@
   }
 
   .module-card {
-    grid-template-columns: 92px minmax(0, 1fr) 64px;
-    padding: 19px 20px;
-    gap: 18px;
+    min-height: 270px;
+  }
+
+  .module-card-active {
+    padding: 21px 22px;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 20px;
   }
 
   .module-icon {
-    width: 84px;
-    height: 84px;
+    width: 66px;
+    height: 66px;
   }
 
   .module-icon svg {
-    width: 55px;
-    height: 55px;
+    width: 43px;
+    height: 43px;
   }
 
   .module-copy h2 {
     font-size: 27px;
   }
 
-  .module-copy p {
-    min-height: auto;
+  .module-copy .module-descriptor {
+    font-size: 11px;
+  }
+
+  .module-copy .module-description {
     font-size: 13px;
-  }
-
-  .module-bars {
-    gap: 5px;
-  }
-
-  .module-bars i {
-    width: 4px;
   }
 }
 
 @media (max-width: 940px) {
   .modules {
     grid-template-columns: 1fr;
+  }
+
+  .module-card {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 600px) {
+  .module-card {
+    min-height: 278px;
+  }
+
+  .module-card-active {
+    padding: 19px 17px;
+    grid-template-columns: 55px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .module-active-head {
+    gap: 18px;
+  }
+
+  .module-number {
+    font-size: 11px;
+  }
+
+  .module-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .module-icon svg {
+    width: 33px;
+    height: 33px;
+  }
+
+  .module-copy h2 {
+    font-size: 22px;
+  }
+
+  .module-copy .module-descriptor {
+    font-size: 9px;
+    line-height: 1.5;
+  }
+
+  .module-copy .module-description {
+    margin-top: 14px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-card-active,
+  .module-action {
+    transition: none;
+  }
+
+  .module-card-active:hover {
+    transform: none;
   }
 }
