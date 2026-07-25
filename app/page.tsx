@@ -1,4 +1,4 @@
-type IconKind = "cluster" | "graph" | "radar" | "network" | "rings" | "eye";
+type IconKind = "cluster" | "graph" | "radar" | "eye";
 
 type RailCard = {
   index: string;
@@ -9,6 +9,27 @@ type RailCard = {
   progress?: number;
   meter?: number;
 };
+
+type ActiveModule = {
+  status: "active";
+  id: string;
+  index: string;
+  name: string;
+  descriptor: string;
+  description: string;
+  actionLabel: string;
+  href: string;
+  icon: IconKind;
+};
+
+type InProgressModule = {
+  status: "in-progress";
+  id: string;
+  initial: "A" | "K";
+  accessibleName: "ANLAK" | "KARARGÂH";
+};
+
+type Module = ActiveModule | InProgressModule;
 
 const railCards: RailCard[] = [
   {
@@ -43,40 +64,42 @@ const railCards: RailCard[] = [
   },
 ];
 
-const modules: Array<{
-  id: string;
-  name: string;
-  subtitle: string;
-  state: string;
-  icon: IconKind;
-}> = [
+const modules: readonly Module[] = [
   {
+    status: "active",
+    id: "duru-goru",
+    index: "01",
+    name: "DURU GÖRÜ",
+    descriptor: "STRATEGIC RESEARCH, REPORTS & FORESIGHT",
+    description:
+      "Jeopolitik, siber güvenlik, enerji ve strateji üzerine araştırmalar, analizler ve öngörüler.",
+    actionLabel: "EXPLORE RESEARCH",
+    href: "#vision",
+    icon: "eye",
+  },
+  {
+    status: "active",
     id: "citem",
+    index: "02",
     name: "CİTEM",
-    subtitle: "Cyber threat intelligence",
-    state: "ACTIVE",
+    descriptor: "CYBER INTELLIGENCE, THREAT EVALUATION & MONITORING",
+    description:
+      "Operasyonel ve taktik siber tehdit istihbaratı, analiz ve izleme platformu.",
+    actionLabel: "VIEW SYSTEM",
+    href: "#citem",
     icon: "cluster",
   },
   {
-    id: "idrak",
-    name: "İDRAK",
-    subtitle: "Intelligence production",
-    state: "IN PROGRESS",
-    icon: "network",
+    status: "in-progress",
+    id: "anlak",
+    initial: "A",
+    accessibleName: "ANLAK",
   },
   {
+    status: "in-progress",
     id: "karargah",
-    name: "KARARGÂH",
-    subtitle: "Strategic command",
-    state: "STANDBY",
-    icon: "rings",
-  },
-  {
-    id: "rasat",
-    name: "RASAT",
-    subtitle: "Reports and research",
-    state: "ACTIVE",
-    icon: "eye",
+    initial: "K",
+    accessibleName: "KARARGÂH",
   },
 ];
 
@@ -121,30 +144,6 @@ function RadarIcon() {
   );
 }
 
-function NetworkIcon() {
-  const points = [[30, 10], [17, 21], [43, 21], [13, 38], [30, 31], [47, 38], [30, 50]];
-
-  return (
-    <svg viewBox="0 0 60 60" aria-hidden="true">
-      <path d="M30 10 17 21 13 38 30 50 47 38 43 21Z" fill="none" />
-      <path d="M30 10v21M17 21l13 10 13-10M13 38l17-7 17 7M30 31v19" fill="none" />
-      {points.map(([cx, cy], index) => (
-        <circle key={`${cx}-${cy}-${index}`} cx={cx} cy={cy} r="2.2" />
-      ))}
-    </svg>
-  );
-}
-
-function RingsIcon() {
-  return (
-    <svg viewBox="0 0 60 60" aria-hidden="true">
-      <circle cx="30" cy="30" r="4" />
-      <circle cx="30" cy="30" r="13" fill="none" />
-      <circle cx="30" cy="30" r="24" fill="none" />
-    </svg>
-  );
-}
-
 function EyeIcon() {
   return (
     <svg viewBox="0 0 60 60" aria-hidden="true">
@@ -163,9 +162,7 @@ function Icon({ kind }: { kind: IconKind }) {
   if (kind === "cluster") return <ClusterIcon />;
   if (kind === "graph") return <GraphIcon />;
   if (kind === "radar") return <RadarIcon />;
-  if (kind === "network") return <NetworkIcon />;
-  if (kind === "eye") return <EyeIcon />;
-  return <RingsIcon />;
+  return <EyeIcon />;
 }
 
 function OwlAndGlobe() {
@@ -317,6 +314,43 @@ function RailCard({ card }: { card: RailCard }) {
   );
 }
 
+function ModuleCard({ module }: { module: Module }) {
+  if (module.status === "in-progress") {
+    return (
+      <article
+        className="module-card module-card-in-progress hud-corners"
+        id={module.id}
+        aria-label={`${module.accessibleName} — In progress`}
+        aria-disabled="true"
+      >
+        <span className="module-initial" aria-hidden="true">{module.initial}</span>
+        <span className="module-progress-state" aria-hidden="true">IN PROGRESS</span>
+      </article>
+    );
+  }
+
+  return (
+    <article className="module-card module-card-active hud-corners" id={module.id}>
+      <div className="module-active-head" aria-hidden="true">
+        <span className="module-number">{module.index}</span>
+        <div className="module-icon octagon">
+          <Icon kind={module.icon} />
+        </div>
+      </div>
+
+      <div className="module-copy">
+        <h2>{module.name}</h2>
+        <p className="module-descriptor">{module.descriptor}</p>
+        <p className="module-description">{module.description}</p>
+        <a className="module-action" href={module.href}>
+          <span>{module.actionLabel}</span>
+          <b aria-hidden="true">›</b>
+        </a>
+      </div>
+    </article>
+  );
+}
+
 export default function Home() {
   return (
     <main className="page-shell" id="top">
@@ -328,9 +362,8 @@ export default function Home() {
 
         <nav className="primary-nav" aria-label="Primary navigation">
           <a className="active" href="#ecosystem">Ecosystem</a>
+          <a href="#duru-goru">DURU GÖRÜ</a>
           <a href="#citem">CİTEM</a>
-          <a href="#idrak">İDRAK</a>
-          <a href="#karargah">KARARGÂH</a>
           <a href="#vision">Vision</a>
         </nav>
 
@@ -368,10 +401,10 @@ export default function Home() {
           <div className="flow hud-corners">
             <p>ECOSYSTEM FLOW <i /></p>
             <ol>
-              <li><span />COLLECT</li>
-              <li><span />ANALYZE</li>
-              <li><span />JUDGE</li>
-              <li className="active"><span />DIRECT</li>
+              <li className="active"><span />RESEARCH</li>
+              <li className="active"><span />CYBER INTELLIGENCE</li>
+              <li><span />CONTEXT ANALYSIS</li>
+              <li><span />COMMAND</li>
             </ol>
           </div>
 
@@ -382,20 +415,7 @@ export default function Home() {
       </section>
 
       <section className="modules" id="modules" aria-label="BAYKUSH systems">
-        {modules.map((module) => (
-          <article className="module-card hud-corners" id={module.id} key={module.name}>
-            <div className="module-icon octagon"><Icon kind={module.icon} /></div>
-            <div className="module-copy">
-              <h2>{module.name}</h2>
-              <p>{module.subtitle}</p>
-              <div className="module-rule" />
-              <span className="module-state"><i />{module.state}</span>
-            </div>
-            <div className="module-bars" aria-hidden="true">
-              {[8, 14, 19, 26, 34, 43, 55].map((height) => <i key={height} style={{ height }} />)}
-            </div>
-          </article>
-        ))}
+        {modules.map((module) => <ModuleCard key={module.id} module={module} />)}
       </section>
 
       <div className="lower-line" aria-hidden="true">
@@ -405,7 +425,7 @@ export default function Home() {
       </div>
 
       <section className="research" id="vision">
-        <p className="eyebrow">RASAT / THE EYE</p>
+        <p className="eyebrow">DURU GÖRÜ / THE EYE</p>
         <div>
           <h2>Reports, research and strategic assessments.</h2>
           <p>
