@@ -9,9 +9,9 @@ import "./globe-animation.css";
 import "./rotating-earth.css";
 
 export const metadata: Metadata = {
-  title: "Project BAYKUSH | Intelligence Becomes Direction",
+  title: "Project BAYKUSH | Independent Intelligence Research",
   description:
-    "An independent cyber, geopolitical, and strategic intelligence initiative building tools and publishing assessments.",
+    "Independent intelligence research and development project exploring cyber threat intelligence, geopolitical context, analytical workflows and decision support.",
 };
 
 export const viewport: Viewport = {
