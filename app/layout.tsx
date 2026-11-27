@@ -1,34 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import type { CSSProperties } from "react";
-import { owlDataUri } from "./owl-data";
-import RotatingEarth from "./RotatingEarth";
+import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
-import "./module-grid.css";
-import "./owl-reference.css";
-import "./globe-animation.css";
-import "./rotating-earth.css";
 
 export const metadata: Metadata = {
-  title: "Project BAYKUSH | Intelligence Becomes Direction",
-  description:
-    "An independent cyber, geopolitical, and strategic intelligence initiative building tools and publishing assessments.",
+  title: { default: "Project BAYKUSH | Intelligence Research", template: "%s | Project BAYKUSH" },
+  description: "Independent intelligence research and development project exploring cyber threat intelligence, geopolitical context, and decision support.",
 };
-
-export const viewport: Viewport = {
-  colorScheme: "dark",
-  themeColor: "#040505",
-};
-
-const bodyStyle = {
-  "--owl-reference-image": `url("${owlDataUri}")`,
-} as CSSProperties;
+export const viewport: Viewport = { colorScheme: "dark", themeColor: "#0f120c" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body style={bodyStyle}>
-        {children}
-        <RotatingEarth />
+      <body>
+        <a className="skip-link" href="#main-content">Skip to content</a>
+        <header className="site-header">
+          <div className="header-inner">
+            <Link className="brand" href="/" aria-label="Project BAYKUSH home">
+              <Image src="/favicon.svg" width={48} height={48} alt="" priority />
+              <span className="brand-text"><span className="brand-word">BAYKUSH</span><span className="brand-subtitle">INTELLIGENCE RESEARCH PROJECT</span></span>
+            </Link>
+            <nav aria-label="Primary navigation">
+              <Link href="/#systems">Ecosystem</Link>
+              <Link href="/#vision">Vision</Link>
+              <Link href="/systems/rasat">Research</Link>
+              <a href="https://github.com/CenkCTI/Project-BAYKUSH">GitHub</a>
+            </nav>
+          </div>
+        </header>
+        <div id="main-content" tabIndex={-1}>{children}</div>
+        <footer className="site-footer"><span>PROJECT BAYKUSH / INDEPENDENT R&amp;D</span><span>UNDER ACTIVE DEVELOPMENT</span></footer>
       </body>
     </html>
   );
