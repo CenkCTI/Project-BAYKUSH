@@ -5,9 +5,6 @@ type RailCard = {
   title: string;
   icon: IconKind;
   metrics: Array<{ label: string; value: string }>;
-  bars?: number[];
-  progress?: number;
-  meter?: number;
 };
 
 const railCards: RailCard[] = [
@@ -16,30 +13,27 @@ const railCards: RailCard[] = [
     title: "COLLECTION",
     icon: "cluster",
     metrics: [
-      { label: "SOURCES", value: "1,248" },
-      { label: "SIGNALS", value: "24,837" },
+      { label: "INPUT", value: "Open CTI sources" },
+      { label: "METHOD", value: "Traceable evidence" },
     ],
-    bars: [7, 14, 10, 19, 12, 17, 9, 23, 14, 20],
   },
   {
     index: "02",
     title: "ANALYSIS",
     icon: "graph",
     metrics: [
-      { label: "RELATIONS", value: "312" },
-      { label: "CONFIDENCE", value: "78%" },
+      { label: "APPROACH", value: "Structured analysis" },
+      { label: "FOCUS", value: "Analyst workflows" },
     ],
-    progress: 78,
   },
   {
     index: "03",
-    title: "COMMAND",
+    title: "DECISION SUPPORT",
     icon: "radar",
     metrics: [
-      { label: "PRIORITY", value: "HIGH" },
-      { label: "RISK LEVEL", value: "MEDIUM" },
+      { label: "OUTPUT", value: "Intelligence products" },
+      { label: "GOAL", value: "Informed decisions" },
     ],
-    meter: 4,
   },
 ];
 
@@ -53,29 +47,29 @@ const modules: Array<{
   {
     id: "citem",
     name: "CİTEM",
-    subtitle: "Cyber threat intelligence",
-    state: "ACTIVE",
+    subtitle: "Cyber threat intelligence workspace",
+    state: "IN DEVELOPMENT",
     icon: "cluster",
   },
   {
-    id: "idrak",
-    name: "İDRAK",
-    subtitle: "Intelligence production",
-    state: "IN PROGRESS",
+    id: "anlak",
+    name: "ANLAK",
+    subtitle: "Strategic and geopolitical intelligence",
+    state: "PLANNED",
     icon: "network",
   },
   {
     id: "karargah",
     name: "KARARGÂH",
-    subtitle: "Strategic command",
-    state: "STANDBY",
+    subtitle: "Management oversight and decision support",
+    state: "PLANNED",
     icon: "rings",
   },
   {
-    id: "rasat",
-    name: "RASAT",
-    subtitle: "Reports and research",
-    state: "ACTIVE",
+    id: "node",
+    name: "INTEL NODE",
+    subtitle: "Shared intelligence data infrastructure",
+    state: "IN DEVELOPMENT",
     icon: "eye",
   },
 ];
@@ -290,27 +284,6 @@ function RailCard({ card }: { card: RailCard }) {
             </div>
           ))}
 
-          {card.bars ? (
-            <div className="micro-bars" aria-hidden="true">
-              {card.bars.map((height, index) => (
-                <i key={`${height}-${index}`} style={{ height }} />
-              ))}
-            </div>
-          ) : null}
-
-          {typeof card.progress === "number" ? (
-            <div className="confidence" aria-label={`${card.progress}% confidence`}>
-              <span style={{ width: `${card.progress}%` }} />
-            </div>
-          ) : null}
-
-          {typeof card.meter === "number" ? (
-            <div className="risk-meter" aria-hidden="true">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <i key={index} className={index < card.meter! ? "active" : ""} />
-              ))}
-            </div>
-          ) : null}
         </div>
       </div>
     </article>
@@ -329,16 +302,13 @@ export default function Home() {
         <nav className="primary-nav" aria-label="Primary navigation">
           <a className="active" href="#ecosystem">Ecosystem</a>
           <a href="#citem">CİTEM</a>
-          <a href="#idrak">İDRAK</a>
-          <a href="#karargah">KARARGÂH</a>
+          <a href="#anlak">ANLAK</a>
+          <a href="#node">Intel Node</a>
           <a href="#vision">Vision</a>
         </nav>
 
         <div className="system-meta">
-          <span className="system-status"><i /> OPERATIONAL STATUS</span>
-          <span className="secure">SECURE</span>
-          <span className="divider" />
-          <span className="language">TR <b>⌄</b></span>
+          <span className="project-status">RESEARCH PROJECT</span>
         </div>
       </header>
 
@@ -353,8 +323,8 @@ export default function Home() {
           </h1>
           <div className="copy-rule" />
           <p>
-            A closed intelligence-to-decision ecosystem built to collect signals, develop judgment,
-            and turn insight into strategic action.
+            An independent research and development project exploring cyber intelligence at technical,
+            tactical, operational and strategic levels — with geopolitical context and decision support.
           </p>
           <a className="cta" href="#modules">
             <span>Explore the ecosystem</span>
@@ -366,12 +336,12 @@ export default function Home() {
 
         <aside className="right-rail">
           <div className="flow hud-corners">
-            <p>ECOSYSTEM FLOW <i /></p>
+            <p>INTELLIGENCE WORKFLOW / CONCEPT <i /></p>
             <ol>
-              <li><span />COLLECT</li>
-              <li><span />ANALYZE</li>
-              <li><span />JUDGE</li>
-              <li className="active"><span />DIRECT</li>
+              <li><span />COLLECT &amp; VALIDATE</li>
+              <li><span />ANALYZE &amp; SYNTHESIZE</li>
+              <li><span />PRODUCE INTELLIGENCE</li>
+              <li className="active"><span />SUPPORT DECISIONS</li>
             </ol>
           </div>
 
@@ -391,9 +361,6 @@ export default function Home() {
               <div className="module-rule" />
               <span className="module-state"><i />{module.state}</span>
             </div>
-            <div className="module-bars" aria-hidden="true">
-              {[8, 14, 19, 26, 34, 43, 55].map((height) => <i key={height} style={{ height }} />)}
-            </div>
           </article>
         ))}
       </section>
@@ -405,15 +372,66 @@ export default function Home() {
       </div>
 
       <section className="research" id="vision">
-        <p className="eyebrow">RASAT / THE EYE</p>
+        <p className="eyebrow">MISSION / PROJECT VISION</p>
         <div>
-          <h2>Reports, research and strategic assessments.</h2>
+          <h2>From information to understanding.</h2>
           <p>
-            BAYKUSH does not only build systems. Its public intelligence layer publishes structured
-            assessments across cyber threats, geopolitics, energy security and strategic warning.
+            BAYKUSH aims to reduce analyst cognitive load, improve collaboration across intelligence
+            teams, and give managers and decision-makers visibility into the intelligence lifecycle.
+            Cyber developments are interpreted in their geopolitical context to support informed decisions.
+          </p>
+          <p>
+            CİTEM and the planned ANLAK workspace aim to support current intelligence, rapid briefs
+            and periodic assessments tailored to intelligence requirements.
           </p>
         </div>
       </section>
+
+      <section className="research" id="infrastructure">
+        <p className="eyebrow">DATA / INTELLIGENCE NODE</p>
+        <div>
+          <h2>Collect once. Preserve source truth.</h2>
+          <p>
+            The Node repository documents adapters for CISA KEV, NVD, FIRST EPSS, ThreatFox and
+            MalwareBazaar, with raw evidence preservation, deterministic normalization and recovery.
+            Continuous collection is a design objective, not a guarantee of public service uptime.
+          </p>
+          <p>
+            Historical measurements, coverage-aware visualizations in CİTEM and intelligence profiles
+            matching incoming data to active requirements are roadmap capabilities. Source reporting
+            volume must not be interpreted as attack volume.
+          </p>
+          <a className="research-link" href="https://github.com/CenkCTI/BAYKUSH-Intel-Node">Explore the Node repository</a>
+        </div>
+      </section>
+
+      <section className="research" id="workspace">
+        <p className="eyebrow">WORKSPACE / CİTEM</p>
+        <div>
+          <h2>Evidence-led cyber intelligence.</h2>
+          <p>
+            CİTEM is a developing cyber threat intelligence workspace with documented investigation,
+            indicator, evidence, relationship, MITRE mapping and reporting features. Its public demo
+            uses fictional, synthetic data.
+          </p>
+          <a className="research-link" href="https://github.com/CenkCTI/CIP">Explore CİTEM on GitHub</a>
+        </div>
+      </section>
+
+      <section className="research" id="research">
+        <p className="eyebrow">RASAT / RESEARCH</p>
+        <div>
+          <h2>Reports and intelligence assessments.</h2>
+          <p>
+            A planned publication space for cyber threat research, technical and operational briefs,
+            geopolitical analysis and strategic assessments. No report archive is claimed at this stage.
+          </p>
+        </div>
+      </section>
+      <footer className="project-footer">
+        <span>PROJECT BAYKUSH / INDEPENDENT RESEARCH &amp; DEVELOPMENT</span>
+        <a href="https://github.com/CenkCTI/Project-BAYKUSH">GitHub</a>
+      </footer>
     </main>
   );
 }
